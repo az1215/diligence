@@ -1,0 +1,8 @@
+1.TypeScriptのインストール
+参考：https://udemy.benesse.co.jp/development/system/typescript.htm：
+(1)Node.jsのインストール
+(2)TypeScriptのインストール
+$ npm install -g typescript
+
+2.create-react-appのインストール
+https://create-react-app.dev/docs/adding-typescript
