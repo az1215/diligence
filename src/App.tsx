@@ -1,15 +1,17 @@
-import React from 'react';
-import './App.css';
-import Button from '@mui/material/Button';
-import styled from "@emotion/styled";
-import MiniDrawer from './componenets/MiniDrawer'
+import { FC } from "react";
+import Main from "./componenets/Main";
+import SignIn from "./componenets/SignIn";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-function App() {
+const App: FC = () => {
   return (
-    <>
-      <MiniDrawer/>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path={`/`} Component={SignIn} />
+        <Route path={`/main`} Component={Main} />
+      </Routes>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;
