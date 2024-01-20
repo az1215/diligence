@@ -1,5 +1,6 @@
-import { useState, FC } from "react";
+import { useState } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
+import { Outlet } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
@@ -112,7 +113,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const MiniDrawer: FC = () => {
+const Layout = () => {
   const classes = useStyles();
 
   const theme = useTheme();
@@ -278,7 +279,8 @@ const MiniDrawer: FC = () => {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        {menuList[selectedMenuIndex].page}
+        <Outlet />
+        {/* {menuList[selectedMenuIndex].page}
         <div className={classes.root}>
           <Snackbar
             className={classes.root}
@@ -300,10 +302,10 @@ const MiniDrawer: FC = () => {
               {alertMessage}
             </Alert>
           </Snackbar>
-        </div>
+        </div> */}
       </Box>
     </Box>
   );
 };
 
-export default MiniDrawer;
+export default Layout;

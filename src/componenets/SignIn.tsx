@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
 import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
+import Stack from "@mui/material/Stack";
 
 import personal_name from "../public/personal_name.png";
 
@@ -34,16 +33,9 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     marginTop: theme.spacing(8),
     display: "flex",
-    border: "1px solid #000",
-    // backgroundColor: "#101F33"
-    padding: "20px",
     borderRadius: "7px",
     alignItems: "center",
     marginBottom: "5px",
-  },
-  avatar: {
-    margin: theme.spacing(1),
-    backgroundColor: theme.palette.secondary.main,
   },
   form: {
     width: "100%", // Fix IE 11 issue.
@@ -66,85 +58,96 @@ export default function SignIn() {
 
   return (
     <>
-      <Container maxWidth="sm">
-        <CssBaseline />
-        <div className={classes.paper}>
-          <div>
-            <img
-              src={personal_name}
-              style={{
-                marginRight: "20px",
-              }}
-            />
-          </div>
-          {/* <Avatar className={classes.avatar}>
-            <LockOutlinedIcon />
-          </Avatar> */}
-          <form className={classes.form} noValidate>
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              label="社員コードまたはメールアドレス"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              error={isErrEmpCodeMail}
-              onBlur={(e) => {
-                setEmpCodeMail(e.target.value);
-                if (e.target.value.trim() === "") {
-                  setIsErrEmpCodeMail(true);
-                } else {
-                  setIsErrEmpCodeMail(false);
-                }
-              }}
-            />
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="パスワード"
-              type="password"
-              autoComplete="current-password"
-              error={isErrPasswd}
-              onBlur={(e) => {
-                setPasswd(e.target.value);
-                if (e.target.value.trim() === "") {
-                  setIsErrPasswd(true);
-                } else {
-                  setIsErrPasswd(false);
-                }
-              }}
-            />
-            {/* <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          /> */}
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              className={classes.submit}
-              onClick={() => {
-                navigate("/main");
-              }}
-            >
-              ログイン
-            </Button>
-          </form>
-        </div>
-        <Grid>
-          <Grid item style={{ marginLeft: "auto" }}>
-            <Link href="#" variant="body2">
-              パスワードを忘れた場合
-            </Link>
-          </Grid>
-        </Grid>
-      </Container>
+      <body
+        style={{ height: "100vh", backgroundColor: "#eaeff1", display: "flex" }}
+      >
+        <Container
+          maxWidth="sm"
+          style={{ alignItems: "center", display: "flex" }}
+        >
+          <Card style={{ alignItems: "center", marginBottom: "50px" }}>
+            <CardContent style={{ padding: "20px" }}>
+              <Grid container alignItems="center">
+                <Grid item xs={12} md={4}>
+                  <Stack
+                    justifyContent="center"
+                    alignItems="center"
+                    sx={{
+                      pl: { md: "0" },
+                      pr: { md: "20px" },
+                    }}
+                  >
+                    <img src={personal_name} />
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={8}>
+                  <Grid container>
+                    <Grid item xs={12}>
+                      <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="社員コードまたはメールアドレス"
+                        name="email"
+                        autoComplete="email"
+                        autoFocus
+                        error={isErrEmpCodeMail}
+                        onBlur={(e) => {
+                          setEmpCodeMail(e.target.value);
+                          if (e.target.value.trim() === "") {
+                            setIsErrEmpCodeMail(true);
+                          } else {
+                            setIsErrEmpCodeMail(false);
+                          }
+                        }}
+                      />
+                      <TextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="password"
+                        label="パスワード"
+                        type="password"
+                        autoComplete="current-password"
+                        error={isErrPasswd}
+                        onBlur={(e) => {
+                          setPasswd(e.target.value);
+                          if (e.target.value.trim() === "") {
+                            setIsErrPasswd(true);
+                          } else {
+                            setIsErrPasswd(false);
+                          }
+                        }}
+                      />
+                      <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        className={classes.submit}
+                        onClick={() => {
+                          navigate("/main");
+                        }}
+                      >
+                        ログイン
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Grid container justifyContent="flex-end">
+                        <Link href="#" variant="body2">
+                          パスワードを忘れた場合
+                        </Link>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Container>
+      </body>
     </>
   );
 }
