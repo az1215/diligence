@@ -100,19 +100,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-interface DiligenceProps {
-  setIsShowAlert: (newState: boolean) => void;
-  setSeverityNum: (newState: number) => void;
-  setAlertMessage: (newState: string) => void;
-  setPageLoadingRate: (newState: number) => void;
-}
+// interface DiligenceProps {
+//   setIsShowAlert: (newState: boolean) => void;
+//   setSeverityNum: (newState: number) => void;
+//   setAlertMessage: (newState: string) => void;
+//   setPageLoadingRate: (newState: number) => void;
+// }
 
-const Diligence: FC<DiligenceProps> = ({
-  setIsShowAlert,
-  setSeverityNum,
-  setAlertMessage,
-  setPageLoadingRate,
-}) => {
+const Diligence = () => {
   const classes = useStyles();
 
   type filteredData = {
@@ -165,7 +160,6 @@ const Diligence: FC<DiligenceProps> = ({
       const year = dt.getFullYear();
       const month = dt.getMonth() + 1;
       setDispDiligenceData(year, month);
-      setPageLoadingRate(100);
     }
   }, []);
 
@@ -465,9 +459,9 @@ const Diligence: FC<DiligenceProps> = ({
 
   const saveData = () => {
     setIsShowSaveConfirm(false);
-    setIsShowAlert(true);
-    setSeverityNum(0);
-    setAlertMessage("勤怠情報を登録しました");
+    // setIsShowAlert(true);
+    // setSeverityNum(0);
+    // setAlertMessage("勤怠情報を登録しました");
   };
 
   const onSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1020,7 +1014,7 @@ const Diligence: FC<DiligenceProps> = ({
               いいえ
             </Button>
             <Button
-              onClick={saveData}
+              // onClick={saveData}
               variant="contained"
               color="primary"
               autoFocus

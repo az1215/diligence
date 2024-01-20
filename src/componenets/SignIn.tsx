@@ -128,7 +128,7 @@ export default function SignIn() {
                         color="primary"
                         className={classes.submit}
                         onClick={() => {
-                          navigate("/main");
+                          navigate("/");
                         }}
                       >
                         ログイン

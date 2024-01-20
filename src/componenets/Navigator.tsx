@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import Divider from "@mui/material/Divider";
 import Drawer, { DrawerProps } from "@mui/material/Drawer";
 import List from "@mui/material/List";
@@ -16,7 +17,7 @@ import SettingsIcon from "@material-ui/icons/Settings";
 
 import personal_logo from "../public/company_name_logo_white.png";
 
-const categories = [
+let categories = [
   {
     id: "Build",
     children: [
@@ -24,16 +25,16 @@ const categories = [
         index: 0,
         title: "勤怠",
         icon: <ScheduleIcon />,
-        active: true,
+        active: false,
       },
-      { index: 1, title: "Database", icon: <DnsRoundedIcon /> },
+      { index: 1, title: "Database", icon: <DnsRoundedIcon />, active: false },
     ],
   },
   {
     id: "Quality",
     children: [
-      { index: 2, title: "Performance", icon: <TimerIcon /> },
-      { index: 3, title: "Analytics", icon: <SettingsIcon /> },
+      { index: 2, title: "Performance", icon: <TimerIcon />, active: false },
+      { index: 3, title: "Analytics", icon: <SettingsIcon />, active: false },
     ],
   },
 ];
@@ -47,13 +48,14 @@ const item = {
   },
 };
 
-interface ListItemProps {
-  setSelectedMenuIndex: (newState: number) => void;
-}
-type CombinedProps = DrawerProps & ListItemProps;
+// interface ListItemProps {
+//   setSelectedMenuIndex: (newState: number) => void;
+// }
+// type CombinedProps = DrawerProps & ListItemProps;
 
-export default function Navigator(props: CombinedProps) {
-  const { setSelectedMenuIndex, ...other } = props;
+export default function Navigator(props: DrawerProps) {
+  const { ...other } = props;
+  const navigate = useNavigate();
 
   return (
     <Drawer variant="permanent" {...other}>
@@ -63,6 +65,14 @@ export default function Navigator(props: CombinedProps) {
         component="div"
         style={{
           alignItems: "center",
+        }}
+        onClick={() => {
+          categories.forEach((ca) => {
+            ca.children.forEach((ch) => {
+              ch.active = false;
+            });
+          });
+          navigate("/");
         }}
       >
         <img
@@ -82,7 +92,23 @@ export default function Navigator(props: CombinedProps) {
                   selected={active}
                   sx={item}
                   onClick={() => {
-                    setSelectedMenuIndex(index);
+                    categories.forEach((ca) => {
+                      ca.children.forEach((ch) => {
+                        if (ch.index === index) {
+                          ch.active = true;
+                        } else {
+                          ch.active = false;
+                        }
+                      });
+                    });
+                    switch (index) {
+                      case 0:
+                        navigate("/diligence");
+                        break;
+                      case 1:
+                        navigate("/patternRegist");
+                        break;
+                    }
                   }}
                 >
                   <ListItemIcon>{icon}</ListItemIcon>

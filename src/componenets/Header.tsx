@@ -41,7 +41,7 @@ export default function Header(props: HeaderProps) {
             <Grid item xs />
             <Grid item>
               <Link
-                href="/"
+                href="/login"
                 variant="body2"
                 sx={{
                   textDecoration: "none",
@@ -51,17 +51,10 @@ export default function Header(props: HeaderProps) {
                   },
                 }}
                 rel="noopener noreferrer"
-                target="_blank"
+                // target="_blank"
               >
                 ログアウト
               </Link>
-            </Grid>
-            <Grid item>
-              <Tooltip title="Alerts • No alerts">
-                <IconButton color="inherit">
-                  <NotificationsIcon />
-                </IconButton>
-              </Tooltip>
             </Grid>
             <Grid item>
               <IconButton color="inherit" sx={{ p: 0.5 }}>

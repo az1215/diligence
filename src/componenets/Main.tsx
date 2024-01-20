@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
+import { Suspense } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { makeStyles } from "@material-ui/core/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -13,8 +15,8 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 
 import Navigator from "./Navigator";
 import Header from "./Header";
-import Diligence from "./Diligence";
-import PatternRegist from "./PatternRegist";
+// import Diligence from "./Diligence";
+// import PatternRegist from "./PatternRegist";
 
 function Copyright() {
   return (
@@ -201,7 +203,6 @@ export default function Main() {
 
   const [alertMessage, setAlertMessage] = useState("");
 
-  const [selectedMenuIndex, setSelectedMenuIndex] = useState(0);
   const [pageLoadingRate, setPageLoadingRate] = useState(0);
 
   useEffect(() => {
@@ -215,19 +216,16 @@ export default function Main() {
     return <Slide {...props} direction="down" />;
   }
 
-  const pageList = [
-    {
-      page: (
-        <Diligence
-          setIsShowAlert={setIsShowAlert}
-          setSeverityNum={setSeverityNum}
-          setAlertMessage={setAlertMessage}
-          setPageLoadingRate={setPageLoadingRate}
-        />
-      ),
-    },
-    { page: <PatternRegist /> },
-  ];
+  // const DiligencePage = () => {
+  //   return (
+  //     <Diligence
+  //       setIsShowAlert={setIsShowAlert}
+  //       setSeverityNum={setSeverityNum}
+  //       setAlertMessage={setAlertMessage}
+  //       setPageLoadingRate={setPageLoadingRate}
+  //     />
+  //   );
+  // };
 
   return (
     <ThemeProvider theme={theme}>
@@ -245,25 +243,23 @@ export default function Main() {
               variant="temporary"
               open={mobileOpen}
               onClose={handleDrawerToggle}
-              setSelectedMenuIndex={setSelectedMenuIndex}
             />
           )}
           <Navigator
             PaperProps={{ style: { width: drawerWidth } }}
             sx={{ display: { sm: "block", xs: "none" } }}
-            setSelectedMenuIndex={setSelectedMenuIndex}
           />
         </Box>
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <Header onDrawerToggle={handleDrawerToggle} />
-          {/* <LinearProgress variant="buffer" value={pageLoadingRate} /> */}
+          {/* <Suspense fallback={<LinearProgress />}> */}
           <Box
             component="main"
             sx={{ flex: 1, py: 2, px: 4, bgcolor: "#eaeff1" }}
           >
-            {pageList[selectedMenuIndex].page}
             <div className={classes.root}>
-              <Snackbar
+              <Outlet />
+              {/* <Snackbar
                 className={classes.root}
                 open={isShowAlert}
                 onClose={() => {
@@ -282,12 +278,13 @@ export default function Main() {
                 >
                   {alertMessage}
                 </Alert>
-              </Snackbar>
+              </Snackbar> */}
             </div>
           </Box>
           {/* <Box component="footer" sx={{ p: 2, bgcolor: "#eaeff1" }}>
             <Copyright />
           </Box> */}
+          {/* </Suspense> */}
         </Box>
       </Box>
     </ThemeProvider>
