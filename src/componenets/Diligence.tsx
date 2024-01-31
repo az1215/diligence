@@ -17,6 +17,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import Tooltip from "@material-ui/core/Tooltip";
 import Box from "@mui/material/Box";
+import Fade from "@material-ui/core/Fade";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 // icon
 import IconButton from "@mui/material/IconButton";
@@ -26,12 +28,13 @@ import ArrowLeftIcon from "@material-ui/icons/ArrowLeft";
 import ArrowRightIcon from "@material-ui/icons/ArrowRight";
 import DeleteIcon from "@material-ui/icons/Delete";
 import CreateRoundedIcon from "@material-ui/icons/CreateRounded";
-
-import { getDiligenceData } from "../data/getDiligenceData";
+import DescriptionIcon from "@material-ui/icons/Description";
 
 import * as CONST from "../common/const";
 
 import { createTheme } from "@mui/material/styles";
+
+import { sysUseStartYear, sysUseStartMonth } from "../common/Global";
 
 const theme = createTheme({
   breakpoints: {
@@ -144,21 +147,31 @@ const Diligence = () => {
   // 勤怠データ（編集用）
   const [diligenceData, setDiligenceData] = useState<dispData[]>([]);
 
+  // 登録済みデータかどうか
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+
   // 承認済みかどうか
   const [isApproved, setIsApproved] = useState<boolean>(false);
 
+  // 表示年
   const [dispYear, setDispYear] = useState<String>("");
+  // 表示月
   const [dispMonth, setDispMonth] = useState<String>("");
+
+  // 月末申請ボタン表示
+  const [isDispApplyBtn, setIsDispApplyBtn] = useState<boolean>(false);
 
   const isFirstRender = useRef(true);
 
   useEffect(() => {
+    clearTimeout(timerRef.current);
     if (isFirstRender.current) {
       isFirstRender.current = false;
     } else {
       const dt = new Date();
       const year = dt.getFullYear();
       const month = dt.getMonth() + 1;
+      setLoading(true);
       setDispDiligenceData(year, month);
     }
   }, []);
@@ -173,13 +186,19 @@ const Diligence = () => {
     return result;
   };
 
+  const timerRef = useRef<number>();
+  const [loading, setLoading] = useState(false);
+
   // 勤怠一覧にデータをセットする
   const setDispDiligenceData = (year: number, month: number) => {
+    const stringYear = String(year);
+    const stringMonth = String(month).padStart(2, "0");
+
     const lastDay = new Date(year, month, 0).getDate();
     let holidays = getHoliday(year, month);
     let result: dispData[] = [];
-    setDispYear(String(year));
-    setDispMonth(String(month).padStart(2, "0"));
+    setDispYear(stringYear);
+    setDispMonth(stringMonth);
 
     let dt = new Date();
     let currentYear = dt.getFullYear();
@@ -193,94 +212,127 @@ const Diligence = () => {
     if ((currentYear === year && currentMonth > month) || currentYear > year) {
       // 先月以前
       dateCls = -1;
-      let gotData = getDiligenceData(year, month);
-      registeredata = gotData.data;
-      isApproved = gotData.isApproved;
     } else if (
       (currentYear === year && currentMonth < month) ||
       currentYear < year
     ) {
       // 来月以降
       dateCls = 1;
-    } else {
-      // 今月
-      let gotData = getDiligenceData(year, month);
-      registeredata = gotData.data;
-      isApproved = gotData.isApproved;
     }
 
-    for (let i = 1; i <= lastDay; i++) {
-      let weekDay = new Date(year, month - 1, i).getDay();
-      let weekStr = CONST.DAY_OF_WEEKSTR_JA[weekDay];
-      let day = `${i}日(${weekStr})`;
-
-      let isHoliday = false;
-      let fontColorCls = 0;
-      if (holidays.includes(i)) {
-        isHoliday = true;
-        fontColorCls = 1;
-      } else {
-        if (weekDay === 0) {
-          isHoliday = true;
-          fontColorCls = 1;
-        } else if (weekDay === 6) {
-          isHoliday = true;
-          fontColorCls = 2;
+    const params = {
+      user: "00000001",
+      year: stringYear,
+      month: stringMonth,
+    };
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    };
+    fetch("/getDiligenceData", requestOptions)
+      //レスポンスをjsonとして受け取りjsオブジェクトを生成
+      //生成したjsオブジェクトをdataに代入
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data.length > 0) {
+          registeredata = JSON.parse(json.data);
+        } else {
+          registeredata = [];
+          setIsRegistered(false);
         }
-      }
+        isApproved = json.isApproved;
+        setIsRegistered(json.isRegistered);
+        for (let i = 1; i <= lastDay; i++) {
+          let weekDay = new Date(year, month - 1, i).getDay();
+          let weekStr = CONST.DAY_OF_WEEKSTR_JA[weekDay];
+          let day = `${i}日(${weekStr})`;
 
-      let isToday: boolean = dateCls === 0 && i === currentDay ? true : false;
+          let isHoliday = false;
+          let fontColorCls = 0;
+          if (holidays.includes(i)) {
+            isHoliday = true;
+            fontColorCls = 1;
+          } else {
+            if (weekDay === 0) {
+              isHoliday = true;
+              fontColorCls = 1;
+            } else if (weekDay === 6) {
+              isHoliday = true;
+              fontColorCls = 2;
+            }
+          }
 
-      let blankData: dispData = {
-        check: false,
-        day: i,
-        dispDay: day,
-        startTime: "",
-        endTime: "",
-        breakTime: "",
-        workTime: "",
-        overTime: "",
-        paid: "",
-        transExp: 0,
-        remarks: "",
-        isHoliday: isHoliday,
-        isToday: isToday,
-        fontColorCls: fontColorCls,
-      };
+          let isToday: boolean =
+            dateCls === 0 && i === currentDay ? true : false;
 
-      if (registeredata.length > 0) {
-        let filteredData = registeredata.find((d) => d.day === i);
-        if (filteredData) {
-          let data = {
+          let blankData: dispData = {
             check: false,
             day: i,
             dispDay: day,
-            startTime: filteredData.startTime,
-            endTime: filteredData.endTime,
-            breakTime: filteredData.breakTime,
-            workTime: filteredData.workTime,
-            overTime: filteredData.overTime,
-            paid: filteredData.paid,
-            transExp: filteredData.transExp,
-            remarks: filteredData.remarks,
+            startTime: "",
+            endTime: "",
+            breakTime: "",
+            workTime: "",
+            overTime: "",
+            paid: "",
+            transExp: 0,
+            remarks: "",
             isHoliday: isHoliday,
             isToday: isToday,
             fontColorCls: fontColorCls,
           };
-          result.push(data);
-        } else {
-          result.push(blankData);
-        }
-      } else {
-        result.push(blankData);
-      }
-    }
 
-    if (result.length > 0) {
-      setDiligenceData(result);
-      setOrgDiligenceData(result);
-      setIsApproved(isApproved);
-    }
+          if (registeredata.length > 0) {
+            let filteredData = registeredata.find((d) => d.day === i);
+            if (filteredData) {
+              let data = {
+                check: false,
+                day: i,
+                dispDay: day,
+                startTime: filteredData.startTime,
+                endTime: filteredData.endTime,
+                breakTime: filteredData.breakTime,
+                workTime: filteredData.workTime,
+                overTime: filteredData.overTime,
+                paid: filteredData.paid,
+                transExp: filteredData.transExp,
+                remarks: filteredData.remarks,
+                isHoliday: isHoliday,
+                isToday: isToday,
+                fontColorCls: fontColorCls,
+              };
+              result.push(data);
+            } else {
+              result.push(blankData);
+            }
+          } else {
+            result.push(blankData);
+          }
+        }
+
+        let bussDays = result.filter((d: dispData) => !d.isHoliday);
+        let lastBussDay = String(bussDays[bussDays.length - 1].day);
+
+        if (
+          !isApproved &&
+          new Date() >= new Date(`${year}/${month}/${lastBussDay}`)
+        ) {
+          setIsDispApplyBtn(true);
+        } else {
+          setIsDispApplyBtn(false);
+        }
+
+        setDiligenceData(result);
+        setOrgDiligenceData(result);
+        setIsApproved(isApproved);
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
   };
 
   const [moveButton, setMoveButton] = useState(1); // 1:前の月に移動、2:次の月に移動
@@ -293,8 +345,10 @@ const Diligence = () => {
       newYear--;
       newMonth = 12;
     }
+
     setDispYear(String(newYear));
     setDispMonth(String(newMonth).padStart(2, "0"));
+    setLoading(true);
     setDispDiligenceData(newYear, newMonth);
   };
 
@@ -308,6 +362,7 @@ const Diligence = () => {
     }
     setDispYear(String(newYear));
     setDispMonth(String(newMonth).padStart(2, "0"));
+    setLoading(true);
     setDispDiligenceData(newYear, newMonth);
   };
 
@@ -459,9 +514,35 @@ const Diligence = () => {
 
   const saveData = () => {
     setIsShowSaveConfirm(false);
-    // setIsShowAlert(true);
-    // setSeverityNum(0);
-    // setAlertMessage("勤怠情報を登録しました");
+    let data = diligenceData.map((obj) => {
+      const { check, dispDay, isHoliday, isToday, fontColorCls, ...newObj } =
+        obj;
+      return newObj;
+    });
+    const params = {
+      user: "00000001",
+      year: dispYear,
+      month: dispMonth,
+      data: JSON.stringify(data),
+      isRegistered: isRegistered,
+    };
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    };
+    fetch("/saveDiligenceData", requestOptions)
+      .then((res) => res.json())
+      .then((json) => {
+        alert("勤怠情報を登録しました");
+        setOrgDiligenceData(diligenceData);
+        // setIsShowAlert(true);
+        // setSeverityNum(0);
+        // setAlertMessage("勤怠情報を登録しました");
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
   };
 
   const onSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -520,13 +601,21 @@ const Diligence = () => {
                 onClickBack();
               }
             }}
+            disabled={
+              `${sysUseStartYear}${sysUseStartMonth}` ===
+              `${dispYear}${dispMonth}`
+            }
           >
             <ArrowLeftIcon fontSize="large" />
           </IconButton>
           <TextField
             type="month"
             value={`${dispYear}-${dispMonth}`}
+            inputProps={{
+              min: `${sysUseStartYear}-${sysUseStartMonth}`,
+            }}
             onChange={(e) => {
+              if (e.target.value === "") return;
               let date = e.target.value.split("-");
               let year = date[0];
               let month = date[1];
@@ -551,91 +640,51 @@ const Diligence = () => {
             <ArrowRightIcon fontSize="large" />
           </IconButton>
         </div>
-        {!isApproved && (
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            className={classes.button}
-            startIcon={<SaveIcon />}
-            onClick={() => {
-              setIsShowSaveConfirm(true);
-            }}
-          >
-            保存
-          </Button>
+        {!loading && (
+          <div>
+            {!isApproved && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                className={classes.button}
+                startIcon={<SaveIcon />}
+                onClick={() => {
+                  setIsShowSaveConfirm(true);
+                }}
+              >
+                保存
+              </Button>
+            )}
+            {isDispApplyBtn && (
+              <Button
+                variant="contained"
+                color="secondary"
+                size="large"
+                className={classes.button}
+                startIcon={<DescriptionIcon />}
+                onClick={() => {
+                  setIsShowSaveConfirm(true);
+                }}
+              >
+                月末申請
+              </Button>
+            )}
+          </div>
         )}
       </Box>
-      {!isApproved && (
-        <Box sx={{ my: 2 }}>
-          <TextField
-            type="time"
-            label="開始時間"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            value={bulkStartTime}
-            onChange={(e) => {
-              setBulkStartTime(e.target.value);
-            }}
-            style={{ marginRight: "5px", backgroundColor: "fff" }}
-            variant="outlined"
-            size="small"
-          />
-          <TextField
-            type="time"
-            label="終了時間"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            value={bulkEndTime}
-            onChange={(e) => {
-              setBulkEndTime(e.target.value);
-            }}
-            style={{ marginRight: "5px" }}
-            variant="outlined"
-            size="small"
-          />
-          <TextField
-            type="time"
-            label="休憩時間"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            value={bulkBreakTime}
-            onChange={(e) => {
-              setBulkBreakTime(e.target.value);
-            }}
-            style={{ marginRight: "10px" }}
-            variant="outlined"
-            size="small"
-          />
-          <TextField
-            type="time"
-            label="有給"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            value={bulkPaid}
-            onChange={(e) => {
-              setBulkPaid(e.target.value);
-            }}
-            style={{ marginRight: "10px" }}
-            variant="outlined"
-            size="small"
-          />
-          <Button
-            onClick={batchInput}
-            variant="contained"
-            color="primary"
-            style={{ height: "40px" }}
-            disabled={!diligenceData.some((d) => d.check)}
-          >
-            一括入力
-          </Button>
-        </Box>
+      {loading && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "50px",
+          }}
+        >
+          <CircularProgress />
+        </div>
       )}
-      {isApproved ? (
+      {!loading && isApproved && (
         <TableContainer component={Paper} className={classes.container2}>
           <Table
             sx={{ minWidth: 700 }}
@@ -764,232 +813,305 @@ const Diligence = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      ) : (
-        <TableContainer component={Paper} className={classes.container}>
-          <Table
-            sx={{ minWidth: 700 }}
-            aria-label="customized table"
-            stickyHeader
-          >
-            <TableHead>
-              <TableRow>
-                <StyledTableCell padding="checkbox">
-                  <Tooltip
-                    title={
-                      diligenceData.some((d) => !d.isHoliday && !d.check)
-                        ? "営業日を一括選択"
-                        : "一括選択を解除"
-                    }
-                    style={{ fontSize: "10px" }}
-                    placement="right"
-                    arrow
-                  >
-                    <Checkbox
-                      style={{
-                        padding: "12px",
-                        color: "white",
-                      }}
-                      checked={
-                        !diligenceData.some((d) => !d.isHoliday && !d.check)
+      )}
+      {!loading && !isApproved && (
+        <>
+          <Box sx={{ my: 2 }}>
+            <TextField
+              type="time"
+              label="開始時間"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              value={bulkStartTime}
+              onChange={(e) => {
+                setBulkStartTime(e.target.value);
+              }}
+              style={{ marginRight: "5px", backgroundColor: "fff" }}
+              variant="outlined"
+              size="small"
+            />
+            <TextField
+              type="time"
+              label="終了時間"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              value={bulkEndTime}
+              onChange={(e) => {
+                setBulkEndTime(e.target.value);
+              }}
+              style={{ marginRight: "5px" }}
+              variant="outlined"
+              size="small"
+            />
+            <TextField
+              type="time"
+              label="休憩時間"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              value={bulkBreakTime}
+              onChange={(e) => {
+                setBulkBreakTime(e.target.value);
+              }}
+              style={{ marginRight: "10px" }}
+              variant="outlined"
+              size="small"
+            />
+            <TextField
+              type="time"
+              label="有給"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              value={bulkPaid}
+              onChange={(e) => {
+                setBulkPaid(e.target.value);
+              }}
+              style={{ marginRight: "10px" }}
+              variant="outlined"
+              size="small"
+            />
+            <Button
+              onClick={batchInput}
+              variant="contained"
+              color="primary"
+              style={{ height: "40px" }}
+              disabled={!diligenceData.some((d) => d.check)}
+            >
+              一括入力
+            </Button>
+          </Box>
+          <TableContainer component={Paper} className={classes.container}>
+            <Table
+              sx={{ minWidth: 700 }}
+              aria-label="customized table"
+              stickyHeader
+            >
+              <TableHead>
+                <TableRow>
+                  <StyledTableCell padding="checkbox">
+                    <Tooltip
+                      title={
+                        diligenceData.some((d) => !d.isHoliday && !d.check)
+                          ? "営業日を一括選択"
+                          : "一括選択を解除"
                       }
-                      onChange={onSelectAllClick}
-                      inputProps={{ "aria-label": "select all desserts" }}
-                    />
-                  </Tooltip>
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>日</StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>
-                  開始時間
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>
-                  終了時間
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>
-                  休憩時間
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>
-                  勤務時間
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>
-                  残業時間
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "100px" }}>
-                  有給
-                </StyledTableCell>
-                <StyledTableCell style={{ width: "200px" }}>
-                  交通費
-                </StyledTableCell>
-                <StyledTableCell>備考</StyledTableCell>
-                <StyledTableCell style={{ width: "50px" }}></StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {diligenceData.map((data, index) => {
-                let labelId = `enhanced-table-checkbox-${index}`;
-                return (
-                  <StyledTableRow
-                    key={data.day}
-                    style={{ margin: 0 }}
-                    className={
-                      data.isToday
-                        ? classes.todayCell
-                        : data.isHoliday
-                        ? classes.hodidayRow
-                        : ""
-                    }
-                    aria-checked={data.check}
-                    selected={data.check}
-                  >
-                    <StyledTableCell>
+                      style={{ fontSize: "10px" }}
+                      placement="right"
+                      arrow
+                    >
                       <Checkbox
-                        style={{ padding: 0 }}
-                        checked={data.check}
-                        onClick={() => {
-                          updateData(data.day, 1, null);
+                        style={{
+                          padding: "12px",
+                          color: "white",
                         }}
-                        inputProps={{ "aria-labelledby": labelId }}
+                        checked={
+                          !diligenceData.some((d) => !d.isHoliday && !d.check)
+                        }
+                        onChange={onSelectAllClick}
+                        inputProps={{ "aria-label": "select all desserts" }}
                       />
-                    </StyledTableCell>
-                    <StyledTableCell
+                    </Tooltip>
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    日
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    開始時間
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    終了時間
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    休憩時間
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    勤務時間
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    残業時間
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "100px" }}>
+                    有給
+                  </StyledTableCell>
+                  <StyledTableCell style={{ width: "200px" }}>
+                    交通費
+                  </StyledTableCell>
+                  <StyledTableCell>備考</StyledTableCell>
+                  <StyledTableCell style={{ width: "50px" }}></StyledTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {diligenceData.map((data, index) => {
+                  let labelId = `enhanced-table-checkbox-${index}`;
+                  return (
+                    <StyledTableRow
+                      key={data.day}
+                      style={{ margin: 0 }}
                       className={
-                        data.fontColorCls === 1
-                          ? classes.redCell
-                          : data.fontColorCls === 2
-                          ? classes.blueCell
+                        data.isToday
+                          ? classes.todayCell
+                          : data.isHoliday
+                          ? classes.hodidayRow
                           : ""
                       }
+                      aria-checked={data.check}
+                      selected={data.check}
                     >
-                      {data.dispDay}
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <TextField
-                        type="time"
-                        value={data.startTime}
-                        inputProps={{
-                          step: 1800,
-                        }}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        onChange={(e) => {
-                          updateData(data.day, 2, e.target.value);
-                        }}
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <TextField
-                        type="time"
-                        value={data.endTime}
-                        inputProps={{
-                          step: 1800,
-                        }}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        onChange={(e) => {
-                          updateData(data.day, 3, e.target.value);
-                        }}
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell style={{}}>
-                      <TextField
-                        type="time"
-                        value={data.breakTime}
-                        inputProps={{
-                          step: 1800,
-                        }}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        onChange={(e) => {
-                          updateData(data.day, 4, e.target.value);
-                        }}
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <div className={classes.approvedText}>
-                        {data.workTime === "" ? "　" : data.workTime}
-                      </div>
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <div className={classes.approvedText}>
-                        {data.overTime === "" ? "　" : data.overTime}
-                      </div>
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <TextField
-                        type="time"
-                        value={data.paid}
-                        inputProps={{
-                          step: 1800,
-                        }}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        onChange={(e) => {
-                          updateData(data.day, 5, e.target.value);
-                        }}
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <TextField
-                        className={classes.textBox}
-                        value={data.transExp === 0 ? "" : data.transExp}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        onChange={(e) => {
-                          updateData(data.day, 6, e.target.value);
-                        }}
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell
-                      sx={{
-                        display: {
-                          xs: "none",
-                          sm: "block",
-                        },
-                      }}
-                    >
-                      <TextField
-                        className={classes.textBox}
-                        value={data.remarks}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        onChange={(e) => {
-                          updateData(data.day, 7, e.target.value);
-                        }}
-                      />
-                    </StyledTableCell>
-                    <StyledTableCell
-                      sx={{
-                        display: {
-                          sm: "none",
-                        },
-                      }}
-                    >
-                      <IconButton color="primary" style={{ padding: 5 }}>
-                        <CreateRoundedIcon />
-                      </IconButton>
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <IconButton
-                        color="primary"
-                        style={{ padding: 5 }}
-                        onClick={() => {
-                          updateData(data.day, 8, null);
+                      <StyledTableCell>
+                        <Checkbox
+                          style={{ padding: 0 }}
+                          checked={data.check}
+                          onClick={() => {
+                            updateData(data.day, 1, null);
+                          }}
+                          inputProps={{ "aria-labelledby": labelId }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell
+                        className={
+                          data.fontColorCls === 1
+                            ? classes.redCell
+                            : data.fontColorCls === 2
+                            ? classes.blueCell
+                            : ""
+                        }
+                      >
+                        {data.dispDay}
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <TextField
+                          type="time"
+                          value={data.startTime}
+                          inputProps={{
+                            step: 1800,
+                          }}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          onChange={(e) => {
+                            updateData(data.day, 2, e.target.value);
+                          }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <TextField
+                          type="time"
+                          value={data.endTime}
+                          inputProps={{
+                            step: 1800,
+                          }}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          onChange={(e) => {
+                            updateData(data.day, 3, e.target.value);
+                          }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell style={{}}>
+                        <TextField
+                          type="time"
+                          value={data.breakTime}
+                          inputProps={{
+                            step: 1800,
+                          }}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          onChange={(e) => {
+                            updateData(data.day, 4, e.target.value);
+                          }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <div className={classes.approvedText}>
+                          {data.workTime === "" ? "　" : data.workTime}
+                        </div>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <div className={classes.approvedText}>
+                          {data.overTime === "" ? "　" : data.overTime}
+                        </div>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <TextField
+                          type="time"
+                          value={data.paid}
+                          inputProps={{
+                            step: 1800,
+                          }}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          onChange={(e) => {
+                            updateData(data.day, 5, e.target.value);
+                          }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <TextField
+                          type="number"
+                          className={classes.textBox}
+                          value={data.transExp === 0 ? "" : data.transExp}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          onChange={(e) => {
+                            updateData(data.day, 6, e.target.value);
+                          }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell
+                        sx={{
+                          display: {
+                            xs: "none",
+                            sm: "block",
+                          },
                         }}
                       >
-                        <DeleteIcon />
-                      </IconButton>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                        <TextField
+                          className={classes.textBox}
+                          value={data.remarks}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          onChange={(e) => {
+                            updateData(data.day, 7, e.target.value);
+                          }}
+                        />
+                      </StyledTableCell>
+                      <StyledTableCell
+                        sx={{
+                          display: {
+                            sm: "none",
+                          },
+                        }}
+                      >
+                        <IconButton color="primary" style={{ padding: 5 }}>
+                          <CreateRoundedIcon />
+                        </IconButton>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <IconButton
+                          color="primary"
+                          style={{ padding: 5 }}
+                          onClick={() => {
+                            updateData(data.day, 8, null);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
       )}
       <div>
         <Dialog
@@ -1014,7 +1136,7 @@ const Diligence = () => {
               いいえ
             </Button>
             <Button
-              // onClick={saveData}
+              onClick={saveData}
               variant="contained"
               color="primary"
               autoFocus

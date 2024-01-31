@@ -1,6 +1,6 @@
 import * as React from "react";
 import AppBar from "@mui/material/AppBar";
-import Avatar from "@mui/material/Avatar";
+// import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import HelpIcon from "@material-ui/icons/Help";
@@ -56,11 +56,11 @@ export default function Header(props: HeaderProps) {
                 ログアウト
               </Link>
             </Grid>
-            <Grid item>
+            {/* <Grid item>
               <IconButton color="inherit" sx={{ p: 0.5 }}>
                 <Avatar src="/static/images/avatar/1.jpg" alt="My Avatar" />
               </IconButton>
-            </Grid>
+            </Grid> */}
           </Grid>
         </Toolbar>
       </AppBar>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import clsx from "clsx";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
@@ -12,8 +13,18 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Stack from "@mui/material/Stack";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import FilledInput from "@material-ui/core/FilledInput";
+import IconButton from "@material-ui/core/IconButton";
+import Visibility from "@material-ui/icons/Visibility";
+import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import OutlinedInput from "@material-ui/core/OutlinedInput";
 
 import personal_name from "../public/personal_name.png";
+
+import { setUserName, setSysUseStartDate } from "../common/Global";
 
 function Copyright() {
   return (
@@ -41,6 +52,12 @@ const useStyles = makeStyles((theme) => ({
     width: "100%", // Fix IE 11 issue.
     marginTop: theme.spacing(1),
   },
+  margin: {
+    margin: theme.spacing(1),
+  },
+  textField: {
+    width: "25ch",
+  },
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
@@ -50,11 +67,22 @@ export default function SignIn() {
   const classes = useStyles();
   const navigate = useNavigate();
 
-  const [empCodeMail, setEmpCodeMail] = useState("");
+  const [userId, setUserId] = useState("");
   const [passwd, setPasswd] = useState("");
 
-  const [isErrEmpCodeMail, setIsErrEmpCodeMail] = useState(false);
+  const [isErrUserId, setIsErrUserId] = useState(false);
   const [isErrPasswd, setIsErrPasswd] = useState(false);
+
+  const [isShowPasswd, setIsShowPasswd] = useState(false);
+  const handleClickShowPasswd = () => {
+    setIsShowPasswd(!isShowPasswd);
+  };
+
+  const handleMouseDownPasswd = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+  };
 
   return (
     <>
@@ -83,7 +111,7 @@ export default function SignIn() {
                 <Grid item xs={12} md={8}>
                   <Grid container>
                     <Grid item xs={12}>
-                      <TextField
+                      {/* <TextField
                         variant="outlined"
                         margin="normal"
                         required
@@ -92,35 +120,88 @@ export default function SignIn() {
                         name="email"
                         autoComplete="email"
                         autoFocus
-                        error={isErrEmpCodeMail}
+                        error={isErrUserId}
                         onBlur={(e) => {
-                          setEmpCodeMail(e.target.value);
+                          setUserId(e.target.value);
                           if (e.target.value.trim() === "") {
-                            setIsErrEmpCodeMail(true);
+                            setIsErrUserId(true);
                           } else {
-                            setIsErrEmpCodeMail(false);
+                            setIsErrUserId(false);
                           }
                         }}
-                      />
-                      <TextField
+                      /> */}
+                      <FormControl
+                        fullWidth
+                        error={isErrUserId}
                         variant="outlined"
                         margin="normal"
-                        required
+                      >
+                        <InputLabel htmlFor="outlined-adornment-userId">
+                          社員コードまたはメールアドレス
+                        </InputLabel>
+                        <OutlinedInput
+                          id="outlined-adornment-userId"
+                          type="text"
+                          required
+                          value={userId}
+                          error={isErrUserId}
+                          onChange={(e) => {
+                            setUserId(e.target.value);
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value.trim() === "") {
+                              setIsErrUserId(true);
+                            } else {
+                              setIsErrUserId(false);
+                            }
+                          }}
+                          labelWidth={250}
+                        />
+                      </FormControl>
+                      <FormControl
                         fullWidth
-                        name="password"
-                        label="パスワード"
-                        type="password"
-                        autoComplete="current-password"
                         error={isErrPasswd}
-                        onBlur={(e) => {
-                          setPasswd(e.target.value);
-                          if (e.target.value.trim() === "") {
-                            setIsErrPasswd(true);
-                          } else {
-                            setIsErrPasswd(false);
+                        variant="outlined"
+                        margin="normal"
+                      >
+                        <InputLabel htmlFor="outlined-adornment-password">
+                          パスワード
+                        </InputLabel>
+                        <OutlinedInput
+                          id="outlined-adornment-password"
+                          type={isShowPasswd ? "text" : "password"}
+                          required
+                          value={passwd}
+                          error={isErrPasswd}
+                          onChange={(e) => {
+                            setPasswd(e.target.value);
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value.trim() === "") {
+                              setIsErrPasswd(true);
+                            } else {
+                              setIsErrPasswd(false);
+                            }
+                          }}
+                          endAdornment={
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={handleClickShowPasswd}
+                                onMouseDown={handleMouseDownPasswd}
+                                edge="end"
+                              >
+                                {isShowPasswd ? (
+                                  <Visibility />
+                                ) : (
+                                  <VisibilityOff />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
                           }
-                        }}
-                      />
+                          labelWidth={85}
+                        />
+                      </FormControl>
                       <Button
                         type="submit"
                         fullWidth
@@ -128,7 +209,46 @@ export default function SignIn() {
                         color="primary"
                         className={classes.submit}
                         onClick={() => {
-                          navigate("/");
+                          if (isErrUserId || isErrPasswd) {
+                            alert("入力してー");
+                          } else {
+                            const requestOptions = {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                user: userId,
+                                pass: passwd,
+                              }),
+                            };
+
+                            // fetch("/saveLoginInfo", requestOptions)
+                            //   .then((res) => res.json())
+                            //   .catch((error) => {
+                            //     console.error("Error fetching data:", error);
+                            //   });
+                            fetch("/getUserInfo", requestOptions)
+                              .then((res) => res.json())
+                              .then((json) => {
+                                if (json.result) {
+                                  if (json.initFlg) {
+                                    alert("初期化！");
+                                  }
+                                  setUserName(json.lastName, json.firstName);
+                                  setSysUseStartDate(
+                                    json.sysUseStartYear,
+                                    json.sysUseStartMonth
+                                  );
+                                  navigate("/");
+                                } else {
+                                  alert(
+                                    "ユーザーIDまたはパスワードが違います。"
+                                  );
+                                }
+                              })
+                              .catch((error) => {
+                                console.error("Error fetching data:", error);
+                              });
+                          }
                         }}
                       >
                         ログイン
