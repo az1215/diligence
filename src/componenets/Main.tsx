@@ -15,7 +15,7 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 
 import Navigator from "./Navigator";
 import Header from "./Header";
-// import Diligence from "./Diligence";
+// import AtndRegist from "./AtndRegist";
 // import PatternRegist from "./PatternRegist";
 
 function Copyright() {
@@ -218,7 +218,7 @@ export default function Main() {
 
   // const DiligencePage = () => {
   //   return (
-  //     <Diligence
+  //     <AtndRegist
   //       setIsShowAlert={setIsShowAlert}
   //       setSeverityNum={setSeverityNum}
   //       setAlertMessage={setAlertMessage}

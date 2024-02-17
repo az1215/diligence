@@ -1,4 +1,4 @@
-export function getDiligenceData(year: Number, month: Number) {
+export function getAtndData(year: Number, month: Number) {
   let isApproved = true;
   if (month === 1) {
     isApproved = false;
@@ -8,7 +8,7 @@ export function getDiligenceData(year: Number, month: Number) {
     data: [],
   };
 
-  fetch("/getDiligenceData")
+  fetch("/getAtndData")
     //レスポンスをjsonとして受け取りjsオブジェクトを生成
     //生成したjsオブジェクトをdataに代入
     .then((res) => res.json())

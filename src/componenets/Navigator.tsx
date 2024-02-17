@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Divider from "@mui/material/Divider";
 import Drawer, { DrawerProps } from "@mui/material/Drawer";
@@ -17,30 +17,10 @@ import SettingsIcon from "@material-ui/icons/Settings";
 
 import personal_logo from "../public/company_name_logo_white.png";
 
-let categories = [
-  {
-    id: "Build",
-    children: [
-      {
-        index: 0,
-        title: "勤怠",
-        icon: <ScheduleIcon />,
-        active: false,
-      },
-      { index: 1, title: "Database", icon: <DnsRoundedIcon />, active: false },
-    ],
-  },
-  {
-    id: "Quality",
-    children: [
-      { index: 2, title: "Performance", icon: <TimerIcon />, active: false },
-      { index: 3, title: "Analytics", icon: <SettingsIcon />, active: false },
-    ],
-  },
-];
+import { atndRegist, atndApproval, adminAnth } from "../common/Global";
 
 const item = {
-  py: "2px",
+  py: "7px",
   px: 3,
   color: "rgba(255, 255, 255, 0.7)",
   "&:hover, &:focus": {
@@ -56,6 +36,64 @@ const item = {
 export default function Navigator(props: DrawerProps) {
   const { ...other } = props;
   const navigate = useNavigate();
+  const categories = useMemo(() => {
+    return [
+      {
+        id: "atndRegist",
+        isShow: atndRegist,
+        children: [
+          {
+            index: 0,
+            title: "勤怠",
+            icon: <ScheduleIcon />,
+            path: "/atndRegist",
+            active: false,
+          },
+          {
+            index: 1,
+            title: "勤務パターン登録",
+            icon: <DnsRoundedIcon />,
+            path: "/patternRegist",
+            active: false,
+          },
+        ],
+      },
+      {
+        id: "admin",
+        isShow: adminAnth || atndApproval,
+        children: [
+          {
+            index: 2,
+            title: "勤怠管理",
+            icon: <TimerIcon />,
+            path: "/atndAdmin",
+            active: false,
+          },
+          {
+            index: 3,
+            title: "スキルシート出力",
+            icon: <SettingsIcon />,
+            path: "/",
+            active: false,
+          },
+          {
+            index: 4,
+            title: "給与明細登録",
+            icon: <SettingsIcon />,
+            path: "/",
+            active: false,
+          },
+          {
+            index: 5,
+            title: "設定",
+            icon: <SettingsIcon />,
+            path: "/",
+            active: false,
+          },
+        ],
+      },
+    ];
+  }, []);
 
   return (
     <Drawer variant="permanent" {...other}>
@@ -67,11 +105,6 @@ export default function Navigator(props: DrawerProps) {
           alignItems: "center",
         }}
         onClick={() => {
-          categories.forEach((ca) => {
-            ca.children.forEach((ch) => {
-              ch.active = false;
-            });
-          });
           navigate("/");
         }}
       >
@@ -84,41 +117,37 @@ export default function Navigator(props: DrawerProps) {
         />
       </Typography>
       <List disablePadding>
-        {categories.map(({ id, children }) => (
-          <Box key={id} sx={{ bgcolor: "#101F33" }}>
-            {children.map(({ index, title, icon, active }) => (
-              <ListItem disablePadding key={index}>
-                <ListItemButton
-                  selected={active}
-                  sx={item}
-                  onClick={() => {
-                    categories.forEach((ca) => {
-                      ca.children.forEach((ch) => {
-                        if (ch.index === index) {
-                          ch.active = true;
-                        } else {
-                          ch.active = false;
-                        }
+        {categories
+          .filter((c) => c.isShow)
+          .map(({ id, children }) => (
+            <Box key={id} sx={{ bgcolor: "#101F33" }}>
+              {children.map(({ index, title, icon, path, active }) => (
+                <ListItem disablePadding key={index}>
+                  <ListItemButton
+                    selected={active}
+                    sx={item}
+                    onClick={() => {
+                      categories.forEach((ca) => {
+                        ca.children.forEach((ch) => {
+                          if (ch.index === index) {
+                            ch.active = true;
+                          } else {
+                            ch.active = false;
+                          }
+                        });
                       });
-                    });
-                    switch (index) {
-                      case 0:
-                        navigate("/diligence");
-                        break;
-                      case 1:
-                        navigate("/patternRegist");
-                        break;
-                    }
-                  }}
-                >
-                  <ListItemIcon>{icon}</ListItemIcon>
-                  <ListItemText>{title}</ListItemText>
-                </ListItemButton>
-              </ListItem>
-            ))}
-            <Divider sx={{ mt: 2 }} />
-          </Box>
-        ))}
+
+                      navigate(path);
+                    }}
+                  >
+                    <ListItemIcon>{icon}</ListItemIcon>
+                    <ListItemText>{title}</ListItemText>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+              <Divider />
+            </Box>
+          ))}
       </List>
     </Drawer>
   );

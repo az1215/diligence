@@ -1,12 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import clsx from "clsx";
 import Button from "@material-ui/core/Button";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import TextField from "@material-ui/core/TextField";
 import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
-import Box from "@material-ui/core/Box";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
@@ -16,7 +12,6 @@ import Stack from "@mui/material/Stack";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import FilledInput from "@material-ui/core/FilledInput";
 import IconButton from "@material-ui/core/IconButton";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
@@ -24,7 +19,7 @@ import OutlinedInput from "@material-ui/core/OutlinedInput";
 
 import personal_name from "../public/personal_name.png";
 
-import { setUserName, setSysUseStartDate } from "../common/Global";
+import { setEmpInfo } from "../common/Global";
 
 function Copyright() {
   return (
@@ -84,6 +79,58 @@ export default function SignIn() {
     event.preventDefault();
   };
 
+  const login = () => {
+    if (userId === "") {
+      setIsErrUserId(true);
+    } else {
+      setIsErrUserId(false);
+    }
+    if (passwd === "") {
+      setIsErrPasswd(true);
+    } else {
+      setIsErrPasswd(false);
+    }
+    if (userId === "" || passwd === "") {
+      alert("入力してー");
+    } else {
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user: userId,
+          pass: passwd,
+        }),
+      };
+
+      // fetch("/saveLoginInfo", requestOptions)
+      //   .then((res) => res.json())
+      //   .catch((error) => {
+      //     console.error("Error fetching data:", error);
+      //   });
+
+      fetch("/getUserInfo", requestOptions)
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.result) {
+            if (json.initFlg) {
+              navigate("/login/updatePassword", {
+                state: {
+                  user: userId,
+                },
+              });
+            } else {
+              setEmpInfo(json);
+              navigate("/");
+            }
+          } else {
+            alert("ユーザーIDまたはパスワードが違います。");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+        });
+    }
+  };
   return (
     <>
       <body
@@ -148,12 +195,8 @@ export default function SignIn() {
                           onChange={(e) => {
                             setUserId(e.target.value);
                           }}
-                          onBlur={(e) => {
-                            if (e.target.value.trim() === "") {
-                              setIsErrUserId(true);
-                            } else {
-                              setIsErrUserId(false);
-                            }
+                          onKeyDown={(e) => {
+                            if (e.code === "Enter") login();
                           }}
                           labelWidth={250}
                         />
@@ -176,12 +219,8 @@ export default function SignIn() {
                           onChange={(e) => {
                             setPasswd(e.target.value);
                           }}
-                          onBlur={(e) => {
-                            if (e.target.value.trim() === "") {
-                              setIsErrPasswd(true);
-                            } else {
-                              setIsErrPasswd(false);
-                            }
+                          onKeyDown={(e) => {
+                            if (e.code === "Enter") login();
                           }}
                           endAdornment={
                             <InputAdornment position="end">
@@ -208,48 +247,7 @@ export default function SignIn() {
                         variant="contained"
                         color="primary"
                         className={classes.submit}
-                        onClick={() => {
-                          if (isErrUserId || isErrPasswd) {
-                            alert("入力してー");
-                          } else {
-                            const requestOptions = {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                user: userId,
-                                pass: passwd,
-                              }),
-                            };
-
-                            // fetch("/saveLoginInfo", requestOptions)
-                            //   .then((res) => res.json())
-                            //   .catch((error) => {
-                            //     console.error("Error fetching data:", error);
-                            //   });
-                            fetch("/getUserInfo", requestOptions)
-                              .then((res) => res.json())
-                              .then((json) => {
-                                if (json.result) {
-                                  if (json.initFlg) {
-                                    alert("初期化！");
-                                  }
-                                  setUserName(json.lastName, json.firstName);
-                                  setSysUseStartDate(
-                                    json.sysUseStartYear,
-                                    json.sysUseStartMonth
-                                  );
-                                  navigate("/");
-                                } else {
-                                  alert(
-                                    "ユーザーIDまたはパスワードが違います。"
-                                  );
-                                }
-                              })
-                              .catch((error) => {
-                                console.error("Error fetching data:", error);
-                              });
-                          }
-                        }}
+                        onClick={login}
                       >
                         ログイン
                       </Button>

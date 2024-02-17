@@ -1,10 +1,69 @@
-export const convertCSVtoArray = (str) => { // 読み込んだCSVデータが文字列として渡される
-    var result = []; // 最終的な二次元配列を入れるための配列
-    var tmp = str.split("\n"); // 改行を区切り文字として行を要素とした配列を生成
- 
-    // 各行ごとにカンマで区切った文字列を要素とした二次元配列を生成
-    for(var i=0;i<tmp.length;++i){
-        result[i] = tmp[i].split(',');
+  // 勤務時間・残業時間計算
+  export const calcTime = (
+    startTime,
+    endTime,
+    breakTime
+  ) => {
+    let result = { workSec: 0, overSec: 0 };
+    if (startTime !== "" && endTime !== "") {
+      let startDate = new Date("1990/01/01");
+      startDate.setHours(parseInt(startTime.slice(0, 2)));
+      startDate.setMinutes(parseInt(startTime.slice(-2)));
+
+      let endDate = new Date("1990/01/01");
+      endDate.setHours(parseInt(endTime.slice(0, 2)));
+      endDate.setMinutes(parseInt(endTime.slice(-2)));
+
+      let workSec = (endDate.getTime() - startDate.getTime()) / 1000;
+
+      // 終了時間が日をまたぐ場合
+      if (workSec <= 0) {
+        let endDate2 = new Date("1990/01/02");
+        endDate2.setHours(parseInt(endTime.slice(0, 2)));
+        endDate2.setMinutes(parseInt(endTime.slice(-2)));
+        workSec = (endDate2.getTime() - startDate.getTime()) / 1000;
+      }
+
+      if (breakTime !== "") {
+        let breakSec = transSec(breakTime);
+        workSec -= breakSec;
+      }
+
+      // 残業時間計算
+      const overSec = workSec - 60 * 60 * 8;
+      
+      result.workSec = workSec;
+      result.overSec = overSec;
     }
-console.log(result)
-}
+    return result;
+  };
+
+  export const transTime = (sec,hoursDigit = 2)=>{
+    const hours = Math.floor(sec / 3600);
+    const min = Math.floor((sec % 3600) / 60);
+    let time = "";
+    if(sec !== 0) {
+      time =
+      hours.toString().padStart(hoursDigit, "0") +
+      ":" +
+      min.toString().padStart(2, "0");
+    }
+
+    return time;
+  }
+
+  export const transSec = (time)=>{
+    let times=[]
+    if(time.includes(":")) {
+        times = time.split(":");
+    } else {
+      if(time ==="") {
+        times[0] =  "00";
+      }else {
+        times[0] = time;
+      }
+        times[1] = "00";
+    }
+    let sec =  parseInt(times[0]) * 60 * 60 + parseInt(times[1]) * 60;
+    return sec
+  } 

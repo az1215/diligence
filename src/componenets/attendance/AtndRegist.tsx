@@ -30,11 +30,12 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import CreateRoundedIcon from "@material-ui/icons/CreateRounded";
 import DescriptionIcon from "@material-ui/icons/Description";
 
-import * as CONST from "../common/const";
+import * as CONST from "../../common/const";
 
 import { createTheme } from "@mui/material/styles";
 
-import { sysUseStartYear, sysUseStartMonth } from "../common/Global";
+import { calcTime, transTime } from "../../common/common";
+import { userId, sysUseStartYear, sysUseStartMonth } from "../../common/Global";
 
 const theme = createTheme({
   breakpoints: {
@@ -103,14 +104,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-// interface DiligenceProps {
-//   setIsShowAlert: (newState: boolean) => void;
-//   setSeverityNum: (newState: number) => void;
-//   setAlertMessage: (newState: string) => void;
-//   setPageLoadingRate: (newState: number) => void;
-// }
-
-const Diligence = () => {
+const AtndRegist = () => {
   const classes = useStyles();
 
   type filteredData = {
@@ -221,7 +215,7 @@ const Diligence = () => {
     }
 
     const params = {
-      user: "00000001",
+      user: userId,
       year: stringYear,
       month: stringMonth,
     };
@@ -230,7 +224,7 @@ const Diligence = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
     };
-    fetch("/getDiligenceData", requestOptions)
+    fetch("/getAtndData", requestOptions)
       //レスポンスをjsonとして受け取りjsオブジェクトを生成
       //生成したjsオブジェクトをdataに代入
       .then((res) => res.json())
@@ -404,8 +398,8 @@ const Diligence = () => {
           newData[index].endTime,
           newData[index].breakTime
         );
-        newData[index].workTime = time.workTime;
-        newData[index].overTime = time.overTime;
+        newData[index].workTime = transTime(time.workSec);
+        newData[index].overTime = transTime(time.overSec);
         break;
       case 3:
         newData[index].endTime = value;
@@ -414,8 +408,8 @@ const Diligence = () => {
           value,
           newData[index].breakTime
         );
-        newData[index].workTime = time2.workTime;
-        newData[index].overTime = time2.overTime;
+        newData[index].workTime = transTime(time2.workSec);
+        newData[index].overTime = transTime(time2.overSec);
         break;
       case 4:
         newData[index].breakTime = value;
@@ -424,8 +418,8 @@ const Diligence = () => {
           newData[index].endTime,
           value
         );
-        newData[index].workTime = time3.workTime;
-        newData[index].overTime = time3.overTime;
+        newData[index].workTime = transTime(time3.workSec);
+        newData[index].overTime = transTime(time3.overSec);
         break;
       case 5:
         newData[index].paid = value;
@@ -450,77 +444,17 @@ const Diligence = () => {
     setDiligenceData(newData);
   };
 
-  // 勤務時間・残業時間計算
-  const calcTime = (
-    startTime: string,
-    endTime: string,
-    breakTime: string
-  ): { workTime: String; overTime: String } => {
-    let result = { workTime: "", overTime: "" };
-    if (startTime !== "" && endTime !== "") {
-      let startDate = new Date("1990/01/01");
-      startDate.setHours(parseInt(startTime.slice(0, 2)));
-      startDate.setMinutes(parseInt(startTime.slice(-2)));
-
-      let endDate = new Date("1990/01/01");
-      endDate.setHours(parseInt(endTime.slice(0, 2)));
-      endDate.setMinutes(parseInt(endTime.slice(-2)));
-
-      let workSec = (endDate.getTime() - startDate.getTime()) / 1000;
-
-      // 終了時間が日をまたぐ場合
-      if (workSec <= 0) {
-        let endDate2 = new Date("1990/01/02");
-        endDate2.setHours(parseInt(endTime.slice(0, 2)));
-        endDate2.setMinutes(parseInt(endTime.slice(-2)));
-        workSec = (endDate2.getTime() - startDate.getTime()) / 1000;
-      }
-
-      if (breakTime !== "") {
-        let breakSec =
-          parseInt(breakTime.slice(0, 2)) * 60 * 60 +
-          parseInt(breakTime.slice(-2)) * 60;
-        workSec -= breakSec;
-      }
-
-      const workHours = Math.floor(workSec / 3600);
-      const workMin = Math.floor((workSec % 3600) / 60);
-
-      const workTime =
-        workHours.toString().padStart(2, "0") +
-        ":" +
-        workMin.toString().padStart(2, "0");
-
-      // 残業時間計算
-      const overSec = workSec - 60 * 60 * 8;
-      const overHours = Math.floor(overSec / 3600);
-      const overMin = Math.floor((overSec % 3600) / 60);
-
-      let overTime = "";
-      if (overSec > 0) {
-        overTime =
-          overHours.toString().padStart(2, "0") +
-          ":" +
-          overMin.toString().padStart(2, "0");
-      }
-      result.workTime = workTime;
-      result.overTime = overTime;
-    }
-    return result;
-  };
-
   const [isShowSaveConfirm, setIsShowSaveConfirm] = useState(false);
   const [isShowMoveConfirm, setIsShowMoveConfirm] = useState(false);
 
   const saveData = () => {
     setIsShowSaveConfirm(false);
     let data = diligenceData.map((obj) => {
-      const { check, dispDay, isHoliday, isToday, fontColorCls, ...newObj } =
-        obj;
+      const { check, dispDay, isToday, fontColorCls, ...newObj } = obj;
       return newObj;
     });
     const params = {
-      user: "00000001",
+      user: userId,
       year: dispYear,
       month: dispMonth,
       data: JSON.stringify(data),
@@ -531,7 +465,7 @@ const Diligence = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
     };
-    fetch("/saveDiligenceData", requestOptions)
+    fetch("/saveAtndData", requestOptions)
       .then((res) => res.json())
       .then((json) => {
         alert("勤怠情報を登録しました");
@@ -572,8 +506,8 @@ const Diligence = () => {
         newData[i].endTime = bulkEndTime;
         newData[i].breakTime = bulkBreakTime;
         let time = calcTime(bulkStartTime, bulkEndTime, bulkBreakTime);
-        newData[i].workTime = time.workTime;
-        newData[i].overTime = time.overTime;
+        newData[i].workTime = transTime(time.workSec);
+        newData[i].overTime = transTime(time.overSec);
         newData[i].paid = bulkPaid;
       }
     }
@@ -715,7 +649,7 @@ const Diligence = () => {
                 <StyledTableCell style={{ width: "200px" }}>
                   交通費
                 </StyledTableCell>
-                <StyledTableCell>備考</StyledTableCell>
+                <StyledTableCell>ｃ</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1190,4 +1124,4 @@ const Diligence = () => {
   );
 };
 
-export default Diligence;
+export default AtndRegist;
